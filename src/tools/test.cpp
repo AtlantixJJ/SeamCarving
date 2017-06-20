@@ -1,22 +1,19 @@
-#include <stdio.h>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 using namespace cv;
+using namespace std;
+
 int main(int argc, char** argv )
 {
-    if ( argc != 2 )
-    {
-        printf("usage: DisplayImage.out <Image_Path>\n");
-        return -1;
+    Mat m = Mat::eye(5,5,CV_8UC1);
+    cout << m << endl;
+    int i,j;
+    for(i = 0 ; i< m.rows; i++){
+        uchar *ptr = m.ptr<uchar>(i);
+        for(j = 0;j < m.cols; j++){
+            printf("%d ",ptr[3*j]);
+        }
+        printf("\n");
     }
-    cv::Mat image;
-    image = cv::imread( argv[1], 1 );
-    if ( !image.data )
-    {
-        printf("No image data \n");
-        return -1;
-    }
-    cv::namedWindow("Display Image", WINDOW_AUTOSIZE );
-    cv::imshow("Display Image", image);
-    cv::waitKey(0);
     return 0;
 }

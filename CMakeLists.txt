@@ -1,5 +1,6 @@
-CMAKE_MINIUM_REQUIRED(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5)
+
 PROJECT(SeamCarving)
-FIND_PACKAGE( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories( include )
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(tools)
