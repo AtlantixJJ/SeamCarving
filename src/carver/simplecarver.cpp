@@ -1,5 +1,4 @@
 #include "carver/simplecarver.h"
-#include <opencv2/imgproc.hpp>
 
 void SimpleCarver::showVerticalSeam(vector<uint> seam) {
 	cv::Mat tmp;
@@ -24,9 +23,10 @@ void SimpleCarver::carve(int choice){
     int dw = image.cols - tw;
     int dh = image.rows - th;
     printf("%d %d %d,%d\n",image.cols, image.rows, dw,dh);
-    carveVertical( dw );
-    // NOTICE : DEBUG
     carveHorizontal( dh );
+	carveVertical( dw );
+    // NOTICE : DEBUG
+    
 }
 
 void SimpleCarver::carveVertical(int times){
@@ -59,14 +59,25 @@ void SimpleCarver::computeFullEnergy() {
 			MinSquired();
 		break;
 		case 1:
-			Sobel();
+			Sobel3();
 		break;
 		case 2:
+			Sobel5();
+		break;
+		case 3:
+			Laplace3();
+		case 4:
 			MinDist();
 			break;
 		default:
 		break;
 	}
+}
+
+void SimpleCarver::Laplace3()
+{
+	int k = 3, s = 1, d = 0;
+	cv::Laplacian(image, energy, 3, k, s, d);
 }
 
 void SimpleCarver::MinSquired(){
@@ -101,7 +112,7 @@ void SimpleCarver::MinDist(){
 				sum = 0;
 				cet = 1000;
 				for(dx = -1 ; dx <= 1 ;dx ++)
-					for(dy = -1;dy<=1 ;dy ++)
+					for(dy = -1;dy<=1 ;dy ++){
 						for(int id=0;id<3;id++)
 							if(x+dx == i && y + dy == j)
 								sum += ( (image.at<cv::Vec3b>(i-dirc[idx][0],j-dirc[idx][1]))[id] - (image.at<cv::Vec3b>(i,j))[id] ) *
@@ -109,14 +120,29 @@ void SimpleCarver::MinDist(){
 							else
 								sum += ( (image.at<cv::Vec3b>(x+dx,y+dy))[id] - (image.at<cv::Vec3b>(x,y))[id] ) *
 								( (image.at<cv::Vec3b>(x+dx,y+dy))[id] - (image.at<cv::Vec3b>(x,y))[id] ) ;
+					}
 				if(cet < sum)cet = sum;
 			}
+			energy.at<uint32_t>(i,j) = cet;
 		}
 	}
 }
 
-void SimpleCarver::Sobel(){
+void SimpleCarver::Sobel3(){
 	int ksize = 3;
+	double scale = 1;
+
+	cv::Sobel(image, energy, 3, 1, 1, ksize, scale);
+	int i,j;
+	for(i = 0;i < energy.rows; i++){
+		for(j = 0; j < energy.cols ; j++){
+			energy.at<uint32_t>(i,j) = energy.at<uint32_t>(i,j) * energy.at<uint32_t>(i,j);
+		}
+	}
+}
+
+void SimpleCarver::Sobel5(){
+	int ksize = 5;
 	double scale = 1;
 
 	cv::Sobel(image, energy, 3, 1, 1, ksize, scale);

@@ -1,0 +1,1 @@
+scp -r ../SeamCarving srthu2@103.41.53.120:Atlantix/

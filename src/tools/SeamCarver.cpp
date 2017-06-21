@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "carver/simplecarver.h"
-#include <cstring>
+#include <cstring>  
 
 int main(int argc, char** argv )
 {
@@ -19,13 +19,13 @@ int main(int argc, char** argv )
         return -1;
     }
     printf("Image loaded (%d, %d)\n", image.rows, image.cols);
-    int h = atoi(argv[2]), w = atoi(argv[3]);
+    int h = atoi(argv[3]), w = atoi(argv[4]);
     printf("Carve to (%d, %d)\n", h, w);
-    
+    printf("Using kernel %d\n",atoi(argv[2]));
     BaseCarver *engine = new SimpleCarver(image, 1);
     //engine->showImage();
     engine->setNewSize(w,h);
-    engine->carve(atoi(argv[4]));
+    engine->carve(atoi(argv[2]));
     engine->imsave(argv[5]);
     return 0;
 }

@@ -2,7 +2,7 @@
 #define SEAMCARVER_H_
 
 #include "carver/basecarver.h"
-
+#include <stdio.h>
 using namespace std;
 
 /**
@@ -37,10 +37,11 @@ public:
 	}
 
 private:
-	void Sobel();
+	void Sobel3();
+	void Sobel5();
+	void Laplace3();
 	void MinDist();
 	void MinSquired();
-	void Laplacian();
 
 	
 	//cv::Mat image;
