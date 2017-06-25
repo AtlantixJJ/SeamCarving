@@ -6,9 +6,9 @@
 int main(int argc, char** argv )
 {
     printf("Simple Seam Carver Initiating...\n");
-    if ( argc != 6 )
+    if ( argc != 7 )
     {
-        printf("usage: SeamCarver <Image_Path> <kernel_choice> <new_h> <new_w> <output_path>\n");
+        printf("usage: SeamCarver <Image_Path> <kernel_choice> <new_h> <new_w> <output_path> <show_seam>\n");
         return -1;
     }
 
@@ -23,11 +23,13 @@ int main(int argc, char** argv )
     int h = atoi(argv[3]), w = atoi(argv[4]);
     printf("Carve to (%d, %d)\n", h, w);
     printf("Using kernel %d\n",atoi(argv[2]));
-    //BaseCarver *engine = new SimpleCarver(image, 1);
-    BaseCarver *engine = new ScalingCarver(image, 1, 0.5);
+    BaseCarver *engine = new SimpleCarver(image, atoi(argv[6]));
+    //BaseCarver *engine = new ScalingCarver(image, 1, 0.5);
     //engine->showImage();
     engine->setNewSize(w,h);
     engine->carve(atoi(argv[2]));
     engine->imsave(argv[5]);
+    printf("Seams save to %s",argv[6]);
+    engine->showSeams(argv[6]);
     return 0;
 }

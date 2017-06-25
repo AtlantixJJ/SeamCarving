@@ -19,17 +19,18 @@ protected:
 
 	//Find the optimal seams
 	void findVerticalSeam(vector<uint>*);
+	void dpVertical(vector<uint>*);
 	void findHorizontalSeam(vector<uint>*);
 
-	void removeVerticalSeam(vector<uint> *seam);
+	void removeVerticalSeam(vector<uint> *seam,bool flag = true);
 	void removeHorizontalSeam(vector<uint> *seam);
 	void fillVerticalSeam(vector<uint> *seam);
 	void fillHorizontalSeam(vector<uint> *seam);
 
     /// DEBUG
-	void showVerticalSeam(vector<uint> seam);
-	void showHorizontalSeam(vector<uint> seam);
-
+	void accVerticalSeam(vector<uint> *seam);
+	void accHorizontalSeam(vector<uint> *seam);
+	
 public:
 	virtual void carve(int choice);
 
@@ -42,10 +43,8 @@ public:
 	}
 
 private:
-	void Sobel3();
-	void Sobel5();
-	void Laplace3();
-	void Laplace5();
+	void SobelFilter(int k=3);
+	void LaplaceFilter(int k=3);
 	void MinDist();
 	void MinSquired();
 	void defaultKernel();
