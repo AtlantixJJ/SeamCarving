@@ -1,5 +1,2 @@
-*.jpg
-*.png
-*.o
-*.a
 build/
+course

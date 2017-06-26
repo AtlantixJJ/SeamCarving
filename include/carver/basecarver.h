@@ -2,6 +2,7 @@
 #define BASECARVER_H_
 
 #include <opencv2/opencv.hpp>
+#include <stdio.h>
 #include "common.h"
 using namespace std;
 
@@ -15,8 +16,8 @@ public:
 	BaseCarver(cv::Mat im, SIGNAL verbose) {
 		image = im;
 		temp = image.clone();
-		f = bt = nullptr;
-		cv::GaussianBlur( image, temp, cv::Size(3,3), 0, 0, cv::BORDER_DEFAULT );
+		f = bt = NULL;
+		//cv::GaussianBlur( image, temp, cv::Size(3,3), 0, 0, cv::BORDER_DEFAULT );
 		cv::cvtColor(temp,grayimage,CV_BGR2GRAY);
 
         this->verbose = verbose;
@@ -65,12 +66,7 @@ public:
 				temp.at<cv::Vec3b>(carvedx[i][j], carvedy[i][j]) = image.at<cv::Vec3b>(i,j);
 			}
 		}
-		if(!flag){
-			cv::imshow("Seam",temp);
-			cv::waitKey(0);
-		}else{
-			cv::imwrite(p,temp);
-		}
+		cv::imwrite(p,temp);
 	}
 
 	virtual ~BaseCarver() {
@@ -109,7 +105,7 @@ public:
 
 	//Return the value of the energy at a particular pixel
 	 int getEnergy(unsigned int row, unsigned int col) {
-		return energy.at<uint8_t>(row, col);
+		return energy.at<int16_t>(row, col);
 	}
 
 protected:

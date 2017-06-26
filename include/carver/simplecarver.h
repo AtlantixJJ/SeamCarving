@@ -11,7 +11,7 @@ using namespace std;
 class SimpleCarver : public BaseCarver{
 protected:
 	//Compute the full energy matrix by scanning the whole image
-	void computeFullEnergy();
+	void computeFullEnergy(bool isfill=false);
 	void carveHorizontal(int times);
 	void carveVertical(int times);
 	//void fillHorizontal(int times);
@@ -19,13 +19,13 @@ protected:
 
 	//Find the optimal seams
 	void findVerticalSeam(vector<uint>*);
-	void dpVertical(vector<uint>*);
+	void dpVertical(vector<uint>*, bool isfill=false);
 	void findHorizontalSeam(vector<uint>*);
 
 	void removeVerticalSeam(vector<uint> *seam,bool flag = true);
-	void removeHorizontalSeam(vector<uint> *seam);
-	void fillVerticalSeam(vector<uint> *seam);
-	void fillHorizontalSeam(vector<uint> *seam);
+	//void removeHorizontalSeam(vector<uint> *seam);
+	void fillVerticalSeam(vector<uint> *seam, bool flag = true);
+	//void fillHorizontalSeam(vector<uint> *seam, bool flag = true);
 
     /// DEBUG
 	void accVerticalSeam(vector<uint> *seam);
@@ -36,7 +36,6 @@ public:
 
 	SimpleCarver(cv::Mat im, SIGNAL vb) :
 		BaseCarver(im, vb){
-		computeFullEnergy();
 	}
 
 	virtual ~SimpleCarver() {

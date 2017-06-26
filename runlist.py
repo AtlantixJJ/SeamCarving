@@ -12,12 +12,14 @@ knum = 7
 for i,f in enumerate(flist):
     path = f.strip()
     print(path)
+    cet = path[7:]
     img = m.imread(path)
     h = int(uni(0.3,0.5)*img.shape[0])
     w = int(uni(0.3,0.5)*img.shape[1])
 
     for j in range(1,knum,1):
-        cmd = "build/src/SeamCarver %s %d %d %d res/small_%d-%d_%d-%d_%d.jpg res/small_%d-%d_%d-%d_%d_seam.jpg &" % (path, j, h, w, j, img.shape[0], img.shape[1], h,w)
+        fname = "res/%s_small_%d-%d_%d-%d_%d" % (cet, j, img.shape[0], img.shape[1], h,w)
+        cmd = "build/src/SeamCarver %s %d %d %d %s.jpg %s_seam.jpg &" % (path, j, h, w, fname, fname)
         log.write(cmd+"\n")
         os.system(cmd)
     
@@ -29,7 +31,8 @@ for i,f in enumerate(flist):
             fl = " "
         else:
             fl = "&"
-        cmd = "build/src/SeamCarver %s %d %d %d res/small_%d-%d_%d-%d_%d.jpg res/small_%d-%d_%d-%d_%d_seam.jpg &" % (path, j, h, w, j, img.shape[0], img.shape[1], h,w)
+        fname = "res/%s_enlarge_%d-%d_%d-%d_%d" % (cet, j, img.shape[0], img.shape[1], h,w)
+        cmd = "build/src/SeamCarver %s %d %d %d %s.jpg %s_seam.jpg &" % (path, j, h, w, fname, fname)
         log.write(cmd+"\n")
         os.system(cmd)
     
@@ -37,7 +40,8 @@ for i,f in enumerate(flist):
     w = int(uni(0.3,0.5)*img.shape[1])
 
     for j in range(1,knum,1):
-        cmd = "build/src/SeamCarver %s %d %d %d res/small_%d-%d_%d-%d_%d.jpg res/small_%d-%d_%d-%d_%d_seam.jpg &" % (path, j, h, w, j, img.shape[0], img.shape[1], h,w)
+        fname = "res/%s_by_%d-%d_%d-%d_%d" % (cet, j, img.shape[0], img.shape[1], h,w)
+        cmd = "build/src/SeamCarver %s %d %d %d %s.jpg %s_seam.jpg &" % (path, j, h, w, fname, fname)
         log.write(cmd+"\n")
         os.system(cmd)
 

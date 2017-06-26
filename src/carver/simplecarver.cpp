@@ -1,9 +1,32 @@
 #include "carver/simplecarver.h"
 #include <stdlib.h>
 #include <cstring>
-
+#include <iostream>
+using namespace std;
 
 int abs(int x){return x < 0 ? -x : x;}
+string type2str(int type) {
+  string r;
+
+  uchar depth = type & CV_MAT_DEPTH_MASK;
+  uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+  switch ( depth ) {
+    case CV_8U:  r = "8U"; break;
+    case CV_8S:  r = "8S"; break;
+    case CV_16U: r = "16U"; break;
+    case CV_16S: r = "16S"; break;
+    case CV_32S: r = "32S"; break;
+    case CV_32F: r = "32F"; break;
+    case CV_64F: r = "64F"; break;
+    default:     r = "User"; break;
+  }
+
+  r += "C";
+  r += (chans+'0');
+
+  return r;
+}
 
 void SimpleCarver::carve(int choice){
 	printf("Carving Begin...\n");
@@ -26,6 +49,7 @@ void SimpleCarver::carve(int choice){
 
 	for(int i = 0; i < com ; i ++){
 		printf("Comm:%d\n",i);
+		
 		carveVertical(wfill?-1:1);
 		carveHorizontal(hfill?-1:1);
 		
@@ -43,7 +67,8 @@ void SimpleCarver::carveVertical(int times){
 	if(!flag)times = -times;
     for(i = 0; i < times ; i++){
 		//printf("Ver:%d\n",i);
-		dpVertical(&seam);
+		computeFullEnergy(flag);
+		dpVertical(&seam,!flag);
         //findVerticalSeam(&seam);
         if(flag)removeVerticalSeam(&seam);
 		else fillVerticalSeam(&seam);
@@ -63,7 +88,8 @@ void SimpleCarver::carveHorizontal(int times){
     for(i = 0; i < times ; i++){
 		//printf("Hor:%d",i);
         //findVerticalSeam(&seam);
-        dpVertical(&seam);
+		computeFullEnergy(flag);
+        dpVertical(&seam,!flag);
 		if(flag)removeVerticalSeam(&seam,false);
 		else fillVerticalSeam(&seam);
 		//seam.clear();
@@ -74,7 +100,11 @@ void SimpleCarver::carveHorizontal(int times){
 	cv::transpose(energy, energy);
 }
 
-void SimpleCarver::computeFullEnergy() {
+bool le(cv::Vec3b a, cv::Vec3b b){
+	return (a[0] < b[0]) && ( a[1] < b[1]) && (a[2] < b[2]) && (a[2] > 250);
+}
+
+void SimpleCarver::computeFullEnergy(bool isfill) {
 	switch(choice){
 		case 1:
 			SobelFilter(3);
@@ -97,30 +127,23 @@ void SimpleCarver::computeFullEnergy() {
 		default:
 		break;
 	}
-	//printf("%d %d\n",energy.rows, energy.cols);
-}
 
-string type2str(int type) {
-  string r;
-
-  uchar depth = type & CV_MAT_DEPTH_MASK;
-  uchar chans = 1 + (type >> CV_CN_SHIFT);
-
-  switch ( depth ) {
-    case CV_8U:  r = "8U"; break;
-    case CV_8S:  r = "8S"; break;
-    case CV_16U: r = "16U"; break;
-    case CV_16S: r = "16S"; break;
-    case CV_32S: r = "32S"; break;
-    case CV_32F: r = "32F"; break;
-    case CV_64F: r = "64F"; break;
-    default:     r = "User"; break;
-  }
-
-  r += "C";
-  r += (chans+'0');
-
-  return r;
+	energy.convertTo(energy,CV_16S);
+	//printf("%s %d %d\n",type2str(energy.type()).c_str(),temp1.rows,temp1.cols);
+	int i,j,st = 100;
+	int d = 20;
+	for(i = 0; i < energy.rows ; i ++){
+		for(j = 0; j < energy.cols ; j++){
+			//energy.at<int16_t>(i,j) = energy.at<int16_t>(i,j) / 5.;
+			//maxi = maxi > temp1.at<int16_t>(i,j) ? maxi : temp1.at<int16_t>(i,j);
+			
+			//if(image.at<cv::Vec3b>(i,j)[2]==255)cout <<image.at<cv::Vec3b>(i,j)<<endl;
+			if( le(image.at<cv::Vec3b>(i,j), cv::Vec3b(20, 20, 255) ) ){
+				//printf("s");
+				energy.at<int16_t>(i,j) = -10000;
+			}
+		}
+	}
 }
 
 void SimpleCarver::SobelFilter(int k){
@@ -160,7 +183,7 @@ void SimpleCarver::MinSquired(){
 					for(int id=0;id<3;id++)
 					sum += ( (image.at<cv::Vec3b>(i+dx,j+dy))[id] - (image.at<cv::Vec3b>(i,j))[id] ) *
 						( (image.at<cv::Vec3b>(i+dx,j+dy))[id] - (image.at<cv::Vec3b>(i,j))[id] ) ;
-			energy.at<uint8_t>(i,j) = sum;
+			energy.at<int16_t>(i,j) = sum;
 		}
 	}
 }
@@ -181,20 +204,20 @@ void SimpleCarver::MinDist(){
 				for(dx = -1 ; dx <= 1 ;dx ++)
 					for(dy = -1;dy<=1 ;dy ++){
 							if(x+dx == i && y + dy == j)
-								sum += ( (grayimage.at<uint8_t>(i-dirc[idx][0],j-dirc[idx][1])) - (grayimage.at<uint8_t>(i,j)) ) *
-									( (grayimage.at<uint8_t>(i-dirc[idx][0],j-dirc[idx][1])) - (grayimage.at<uint8_t>(i,j)) );
+								sum += ( (grayimage.at<int16_t>(i-dirc[idx][0],j-dirc[idx][1])) - (grayimage.at<int16_t>(i,j)) ) *
+									( (grayimage.at<int16_t>(i-dirc[idx][0],j-dirc[idx][1])) - (grayimage.at<int16_t>(i,j)) );
 							else
-								sum += ( (grayimage.at<uint8_t>(x+dx,y+dy)) - (grayimage.at<uint8_t>(x,y)) ) *
-								( (grayimage.at<uint8_t>(x+dx,y+dy)) - (grayimage.at<uint8_t>(x,y)) ) ;
+								sum += ( (grayimage.at<int16_t>(x+dx,y+dy)) - (grayimage.at<int16_t>(x,y)) ) *
+								( (grayimage.at<int16_t>(x+dx,y+dy)) - (grayimage.at<int16_t>(x,y)) ) ;
 					}
 				if(cet < sum)cet = sum;
 			}
-			energy.at<uint8_t>(i,j) = cet;
+			energy.at<int16_t>(i,j) = cet;
 		}
 	}
 }
 
-void SimpleCarver::dpVertical(vector<uint> *seam)
+void SimpleCarver::dpVertical(vector<uint> *seam,bool isfill)
 {
 	//printf("E:%d %d I %d %d\n",energy.rows,energy.cols,image.rows,image.cols);
 	int i,j;
@@ -203,9 +226,16 @@ void SimpleCarver::dpVertical(vector<uint> *seam)
 	//		f[0][i] = this->getEnergy(0,i);
 		//}
 	//}
-
+	int st=0;
 	for(i = 0; i < image.rows ;i++){
 		for(j = 0;j < image.cols ;j++){
+			f[i][j] = 1000;
+			//printf("%d ",f[i][j]);
+		}
+		//printf("\n");
+	}
+	for(i = st; i < image.rows -st;i++){
+		for(j = st;j < image.cols -st;j++){
 			f[i][j] = this->getEnergy(i,j);
 			//printf("%d ",f[i][j]);
 		}
@@ -224,7 +254,7 @@ void SimpleCarver::dpVertical(vector<uint> *seam)
 				mini = 1000000;
 			}
 
-			if(f[i-1][j] <= mini){//update
+			if(!isfill && f[i-1][j] <= mini){//update
 				mini = f[i-1][j];
 				ind = j;
 			}
@@ -240,7 +270,8 @@ void SimpleCarver::dpVertical(vector<uint> *seam)
 	}
 
 	mini = 1e9;
-	for(i = 0; i < image.cols; i++){
+	
+	for(i = st; i < image.cols-st; i++){
 		//printf("%d ",f[image.rows-1][i]);
 		if(f[image.rows-1][i] < mini){
 			mini = f[image.rows-1][i];
@@ -325,7 +356,7 @@ void SimpleCarver::removeVerticalSeam(vector<uint>* seam,bool flag) {
 				carvedx[col][row] = carvedx[col+1][row];
 				carvedy[col][row] = carvedy[col+1][row];
 			}
-			//grayimage.at<uint8_t>(row, col) = grayimage.at<uint8_t>(row, col+1);
+			//grayimage.at<int16_t>(row, col) = grayimage.at<int16_t>(row, col+1);
             //energy.at<uint32_t>(row, col) = energy.at<uint32_t>(row, col+1);
         }
 	}
@@ -334,13 +365,9 @@ void SimpleCarver::removeVerticalSeam(vector<uint>* seam,bool flag) {
 	image = image(cv::Rect(0, 0, image.cols-1, image.rows));
 	cv::cvtColor(image,grayimage,CV_RGB2GRAY);
     //energy = image(cv::Rect(0, 0, image.cols-1, image.rows));
-
-	//Re-compute the energy of the new image
-	computeFullEnergy();
-//	computeEnergyAfterSeamRemoval(seam);
 }
 
-void SimpleCarver::fillVerticalSeam(vector<uint>* seam)
+void SimpleCarver::fillVerticalSeam(vector<uint>* seam, bool flag)
 {
 	//printf("Fill V being...\n");
 	cv::Mat newim;
@@ -351,6 +378,8 @@ void SimpleCarver::fillVerticalSeam(vector<uint>* seam)
 		}
 		for (int col = 0; col <= (*seam)[row]; ++col){
 			newim.at<cv::Vec3b>(row, col) = image.at<cv::Vec3b>(row, col);
+			carvedx[row][col] = carvedx[row][col];
+			carvedy[row][col] = carvedy[row][col];
             //energy.at<uint32_t>(row, col) = energy.at<uint32_t>(row, col+1);
         }
 	}
@@ -369,45 +398,18 @@ void SimpleCarver::fillVerticalSeam(vector<uint>* seam)
 			//printf("%d %d\n",row, col);
 			newim.at<cv::Vec3b>(row, col+1) = image.at<cv::Vec3b>(row, col);
             //energy.at<uint32_t>(row, col) = energy.at<uint32_t>(row, col+1);
+			if(flag){
+				carvedx[row][col+1] = carvedx[row][col];
+				carvedy[row][col+1] = carvedy[row][col];
+			}else{
+				//carvedx[row][col] = carvedx[row][col+1];
+				//carvedy[row][col] = carvedy[row][col+1];
+				carvedx[col+1][row] = carvedx[col][row];
+				carvedy[col+1][row] = carvedy[col][row];
+			}
         }
 	}
 
 	image = newim.clone();
 	cv::cvtColor(newim,grayimage,CV_RGB2GRAY);
-
-	//printf("Fill V end.\n");
-	computeFullEnergy();
-}
-
-void SimpleCarver::fillHorizontalSeam(vector<uint>* seam)
-{
-	cv::transpose(image, image);
-	cv::transpose(energy, energy);
-	fillVerticalSeam(seam);
-
-	//Transpose back
-	cv::transpose(image, image);
-	cv::transpose(energy, energy);
-}
-
-void SimpleCarver::findHorizontalSeam(vector<uint> *seam) {
-	//Transpose the matrices and find the vertical seam
-	cv::transpose(image, image);
-	cv::transpose(energy, energy);
-	findVerticalSeam(seam);
-
-	//Transpose back
-	cv::transpose(image, image);
-	cv::transpose(energy, energy);
-}
-
-void SimpleCarver::removeHorizontalSeam(vector<uint> *seam) {
-	//Transpose the matrices and remove the vertical seam
-	cv::transpose(image, image);
-	cv::transpose(energy, energy);
-	removeVerticalSeam(seam);
-
-	//Transpose back
-	cv::transpose(image, image);
-	cv::transpose(energy, energy);
 }
